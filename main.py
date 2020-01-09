@@ -1,20 +1,5 @@
 import numpy as np
 import cv2
-import os
-from tqdm import tqdm
-import random
-import os
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import matplotlib.patches as patches
-import pickle
-from glob import glob
-import imgaug as ia
-from imgaug import augmenters as iaa
-from shapely.geometry import Polygon
-
-from helper_functions import resize_image, draw_image
-from global_variables import ref_card, card_width, card_height
 
 # preparation: resizing and taking only green part
 def prepare_image(img):
