@@ -35,10 +35,11 @@ def process_file(card_img_path):
 
   contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
   sorted_contours = sorted(contours, key = cv2.contourArea, reverse = True)
-  print(len(sorted_contours))
+
   rectangle = cv2.minAreaRect(sorted_contours[0])
   box = cv2.boxPoints(rectangle)
   box = np.int0(box)
+
   img = cv2.drawContours(img.copy(), sorted_contours, 0, (0, 255, 0), 3)
   img = cv2.drawContours(img.copy(), [box], 0, (0, 0, 255), 3)
 
