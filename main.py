@@ -16,34 +16,43 @@ from shapely.geometry import Polygon
 from helper_functions import resize_image, draw_image
 from global_variables import ref_card, card_width, card_height
 
-card_img_path = "qc.jpg"
+# preparation: resizing and taking only green part
+def prepare_image(img):
+  half = int(img.shape[1] / 2)
+  return img[:, half:, :]
 
-img = cv2.imread(card_img_path, cv2.IMREAD_COLOR)
+def resize_image(img):
+  resize_scale = 17
+  width = int(img.shape[1] * resize_scale / 100)
+  height = int(img.shape[0] * resize_scale / 100)
+  dim = (width, height)
+  return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-gray = cv2.bilateralFilter(gray, 11, 11, 17)
-edge = cv2.Canny(gray, 30, 200)
+def display_image_and_wait(image):
+  cv2.imshow('image', image)
+  cv2.waitKey()
 
-contours, hierarchy = cv2.findContours(edge.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+def merge_images(images):
+  return np.concatenate(images, axis = 1)
 
-index = 0
-sorted_contours = sorted(contours, key = cv2.contourArea, reverse = True)
+def process_file(card_img_path):
+  img = cv2.imread(card_img_path, cv2.IMREAD_COLOR)
+  
+  img = prepare_image(img)
+  
+  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  gray_3_channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+  
+  _, mask = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)
+  mask_3_channel = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+  masked_image = cv2.bitwise_and(img, img, mask = mask)
 
-contour_color = (0, 255, 0)
-contour_thickness = 3
-# cv2.drawContours(img, sorted_contours, index, contour_color, contour_thickness)
+  return merge_images([img, gray_3_channel, mask_3_channel, masked_image])
 
-selected_contour = sorted_contours[0]
-rectangle = cv2.minAreaRect(selected_contour)
-box = cv2.boxPoints(rectangle)
-box = np.int0(box)
-# image = cv2.drawContours(img, [box], 0, (0, 0, 255), 5)
+image_paths = ["./10h.jpg", "./2d.jpg", "./Jh.jpg", "./Kc.jpg", "./Kd.jpg"]
 
-new_perspective = cv2.getPerspectiveTransform(np.float32(box), ref_card)
-card_image = cv2.warpPerspective(img, new_perspective, (card_width, card_height))
+for image_path in image_paths:
+  result = process_file(image_path)
 
-print(rectangle)
-print(ref_card)
-
-draw_image('img', img)
-draw_image('card', card_image)
+  resized_result = resize_image(result)
+  display_image_and_wait(resized_result)

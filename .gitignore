@@ -1,2 +1,6 @@
 __pycache__/
 tags
+dtd/
+dtd-r1.0.1.tar.gz
+venv/
+*.swp
