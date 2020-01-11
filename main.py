@@ -7,7 +7,7 @@ def prepare_image(img):
   return img[:, half:, :]
 
 def resize_image(img):
-  resize_scale = 20
+  resize_scale = 25
   width = int(img.shape[1] * resize_scale / 100)
   height = int(img.shape[0] * resize_scale / 100)
   dim = (width, height)
@@ -20,13 +20,36 @@ def display_image_and_wait(image):
 def merge_images(images):
   return np.concatenate(images, axis = 1)
 
-def process_file(card_img_path):
+def crop_rectangle(img, rect):
+    # get the parameter of the small rectangle
+    center, size, angle = rect
+    center, size = tuple(map(int, center)), tuple(map(int, size))
+
+    # get row and col num in img
+    height, width = img.shape[:2]
+
+    rectangle_width, rectangle_height = size
+
+    if rectangle_width > rectangle_height:
+      angle += 90
+      size = (size[1], size[0])
+
+    # calculate the rotation matrix
+    M = cv2.getRotationMatrix2D(center, angle, 1)
+    # rotate the original image
+    img_rot = cv2.warpAffine(img, M, (width, height))
+
+    # now rotated rectangle becomes vertical and we crop it
+    img_crop = cv2.getRectSubPix(img_rot, size, center)
+
+    return img_crop, img_rot
+
+def process_file(card_img_path, debug = False):
   img = cv2.imread(card_img_path, cv2.IMREAD_COLOR)
   
-  img = prepare_image(img)
+  halfed_image = prepare_image(img)
   
-  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  gray_3_channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+  gray = cv2.cvtColor(halfed_image, cv2.COLOR_BGR2GRAY)
   
   _, mask = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)
 
@@ -34,17 +57,26 @@ def process_file(card_img_path):
   sorted_contours = sorted(contours, key = cv2.contourArea, reverse = True)
 
   rectangle = cv2.minAreaRect(sorted_contours[0])
+  angle = rectangle[2]
+  print(angle)
   box = cv2.boxPoints(rectangle)
   box = np.int0(box)
 
   img_with_whitened_card = cv2.drawContours(gray.copy(), sorted_contours, 0, (255, 255, 255), cv2.FILLED)
   _, better_mask = cv2.threshold(img_with_whitened_card, 254, 255, cv2.THRESH_BINARY)
-  better_masked_image = cv2.bitwise_and(img.copy(), img.copy(), mask = better_mask)
+  better_masked_image = cv2.bitwise_and(halfed_image.copy(), halfed_image.copy(), mask = better_mask)
   
-  img = cv2.drawContours(img.copy(), sorted_contours, 0, (0, 255, 0), 3)
-  img = cv2.drawContours(img.copy(), [box], 0, (0, 0, 255), 3)
+  image_with_contours = cv2.drawContours(halfed_image.copy(), sorted_contours, 0, (0, 255, 0), 3)
+  image_with_contours = cv2.drawContours(image_with_contours.copy(), [box], 0, (0, 0, 255), 3)
+
+  cropped, rotated = crop_rectangle(better_masked_image, rectangle)
   
-  return merge_images([img, gray_3_channel, better_masked_image])
+  if debug:
+    debug_image = merge_images([image_with_contours, better_masked_image])
+    debug_image = resize_image(debug_image)
+    display_image_and_wait(debug_image)
+
+  return cropped
 
 def main():
   image_paths = ["./10h.jpg", "./2d.jpg", "./Jh.jpg", "./Kc.jpg", "./Kd.jpg"]
