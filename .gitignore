@@ -4,3 +4,4 @@ dtd/
 dtd-r1.0.1.tar.gz
 venv/
 *.swp
+card_images/*.jpg

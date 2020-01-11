@@ -1,8 +1,10 @@
 import numpy as np
 import cv2
+import os
 
-# preparation: resizing and taking only green part
+# preparation: taking only green part
 def prepare_image(img):
+  height, width = img.shape[:2]
   half = int(img.shape[1] / 2)
   return img[:, half:, :]
 
@@ -13,19 +15,17 @@ def resize_image(img):
   dim = (width, height)
   return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
-def display_image_and_wait(image):
-  cv2.imshow('image', image)
+def display_image_and_wait(image, label = 'image'):
+  cv2.imshow(label, image)
   cv2.waitKey()
 
 def merge_images(images):
   return np.concatenate(images, axis = 1)
 
 def crop_rectangle(img, rect):
-    # get the parameter of the small rectangle
     center, size, angle = rect
     center, size = tuple(map(int, center)), tuple(map(int, size))
 
-    # get row and col num in img
     height, width = img.shape[:2]
 
     rectangle_width, rectangle_height = size
@@ -34,12 +34,9 @@ def crop_rectangle(img, rect):
       angle += 90
       size = (size[1], size[0])
 
-    # calculate the rotation matrix
     M = cv2.getRotationMatrix2D(center, angle, 1)
-    # rotate the original image
     img_rot = cv2.warpAffine(img, M, (width, height))
 
-    # now rotated rectangle becomes vertical and we crop it
     img_crop = cv2.getRectSubPix(img_rot, size, center)
 
     return img_crop, img_rot
@@ -58,7 +55,6 @@ def process_file(card_img_path, debug = False):
 
   rectangle = cv2.minAreaRect(sorted_contours[0])
   angle = rectangle[2]
-  print(angle)
   box = cv2.boxPoints(rectangle)
   box = np.int0(box)
 
@@ -79,12 +75,15 @@ def process_file(card_img_path, debug = False):
   return cropped
 
 def main():
-  image_paths = ["./10h.jpg", "./2d.jpg", "./Jh.jpg", "./Kc.jpg", "./Kd.jpg"]
-  
-  for image_path in image_paths:
+  folder_path = "input_images/"
+  folder_files = os.listdir(folder_path)
+  folder_files = sorted(folder_files)
+  pwd = os.getcwd()
+  image_paths = map(lambda file_name: (os.path.join(pwd, folder_path, file_name), file_name), folder_files)
+
+  for (image_path, file_name) in image_paths:
     result = process_file(image_path)
-  
-    resized_result = resize_image(result)
-    display_image_and_wait(resized_result)
+    cv2.imwrite('card_images/{file_name}'.format(file_name = file_name) + ".jpg", result)
+    print('saved file {file_name}'.format(file_name = file_name))
 
 main()
