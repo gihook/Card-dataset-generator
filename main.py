@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import os
 
-# preparation: taking only green part
 def prepare_image(img):
   height, width = img.shape[:2]
   half = int(img.shape[1] / 2)
@@ -34,12 +33,12 @@ def crop_rectangle(img, rect):
       angle += 90
       size = (size[1], size[0])
 
-    M = cv2.getRotationMatrix2D(center, angle, 1)
-    img_rot = cv2.warpAffine(img, M, (width, height))
+    rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1)
+    rotated_image = cv2.warpAffine(img, rotation_matrix, (width, height))
 
-    img_crop = cv2.getRectSubPix(img_rot, size, center)
+    cropped_image = cv2.getRectSubPix(rotated_image, size, center)
 
-    return img_crop, img_rot
+    return cropped_image, rotated_image
 
 def process_file(card_img_path, debug = False):
   img = cv2.imread(card_img_path, cv2.IMREAD_COLOR)
@@ -68,7 +67,9 @@ def process_file(card_img_path, debug = False):
   cropped, rotated = crop_rectangle(better_masked_image, rectangle)
   
   if debug:
-    debug_image = merge_images([image_with_contours, better_masked_image])
+    gray_3_channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+    better_mask_3_channel = cv2.cvtColor(better_mask, cv2.COLOR_GRAY2BGR)
+    debug_image = merge_images([image_with_contours, gray_3_channel, better_mask_3_channel, better_masked_image])
     debug_image = resize_image(debug_image)
     display_image_and_wait(debug_image)
 
