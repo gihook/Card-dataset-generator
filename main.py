@@ -46,11 +46,13 @@ def process_file(card_img_path):
   
   return merge_images([img, gray_3_channel, better_masked_image])
 
-# main logic
-image_paths = ["./10h.jpg", "./2d.jpg", "./Jh.jpg", "./Kc.jpg", "./Kd.jpg"]
+def main():
+  image_paths = ["./10h.jpg", "./2d.jpg", "./Jh.jpg", "./Kc.jpg", "./Kd.jpg"]
+  
+  for image_path in image_paths:
+    result = process_file(image_path)
+  
+    resized_result = resize_image(result)
+    display_image_and_wait(resized_result)
 
-for image_path in image_paths:
-  result = process_file(image_path)
-
-  resized_result = resize_image(result)
-  display_image_and_wait(resized_result)
+main()
