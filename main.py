@@ -7,7 +7,7 @@ def prepare_image(img):
   return img[:, half:, :]
 
 def resize_image(img):
-  resize_scale = 17
+  resize_scale = 20
   width = int(img.shape[1] * resize_scale / 100)
   height = int(img.shape[0] * resize_scale / 100)
   dim = (width, height)
@@ -29,9 +29,6 @@ def process_file(card_img_path):
   gray_3_channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
   
   _, mask = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)
-  mask_3_channel = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-  masked_image = cv2.bitwise_and(img, img, mask = mask)
-
 
   contours, hierarchy = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
   sorted_contours = sorted(contours, key = cv2.contourArea, reverse = True)
@@ -40,10 +37,14 @@ def process_file(card_img_path):
   box = cv2.boxPoints(rectangle)
   box = np.int0(box)
 
+  img_with_whitened_card = cv2.drawContours(gray.copy(), sorted_contours, 0, (255, 255, 255), cv2.FILLED)
+  _, better_mask = cv2.threshold(img_with_whitened_card, 254, 255, cv2.THRESH_BINARY)
+  better_masked_image = cv2.bitwise_and(img.copy(), img.copy(), mask = better_mask)
+  
   img = cv2.drawContours(img.copy(), sorted_contours, 0, (0, 255, 0), 3)
   img = cv2.drawContours(img.copy(), [box], 0, (0, 0, 255), 3)
-
-  return merge_images([img, gray_3_channel, mask_3_channel, masked_image])
+  
+  return merge_images([img, gray_3_channel, better_masked_image])
 
 # main logic
 image_paths = ["./10h.jpg", "./2d.jpg", "./Jh.jpg", "./Kc.jpg", "./Kd.jpg"]
