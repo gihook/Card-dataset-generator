@@ -80,7 +80,20 @@ def process_file(card_img_path, debug=False):
 
     cropped, rotated = crop_rectangle(better_masked_image, rectangle)
 
+    gray_cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
+    _, alpha_mask = cv2.threshold(gray_cropped, 1, 255, cv2.THRESH_BINARY)
+    b, g, r = cv2.split(cropped)
+    alphachannel = np.ones(b.shape, dtype=b.dtype) * 255
+    alphachannel = cv2.bitwise_and(alphachannel.copy(),
+                                   alphachannel.copy(),
+                                   mask=alpha_mask)
+    cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2BGRA)
+    cropped[:, :, 3] = alphachannel
+
     if debug:
+        alphachannel_4 = cv2.cvtColor(alphachannel, cv2.COLOR_GRAY2BGRA)
+        display_image_and_wait(merge_images([cropped, alphachannel_4]))
+
         gray_3_channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         better_mask_3_channel = cv2.cvtColor(better_mask, cv2.COLOR_GRAY2BGR)
         debug_image = merge_images([

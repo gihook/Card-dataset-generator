@@ -14,9 +14,11 @@ def main():
 
     for (image_path, file_name) in image_paths:
         result = process_file(image_path)
-        filename = f'card_images/{file_name}.jpg'
+        filename = "card_images/{file_name}".format(
+            file_name=file_name).replace(".jpg", ".png")
         cv2.imwrite(filename, result)
-        print(f'saved file {filename}')
+        print("saved file {filename}".format(filename=filename))
+        print(result.shape)
 
 
 if __name__ == '__main__':
