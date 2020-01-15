@@ -48,11 +48,13 @@ def get_convex_hull(card_image, point):
     single_contour = np.concatenate(list(contours))
     single_hull = cv2.convexHull(single_contour)
 
-    result = cv2.drawContours(image_section, [single_hull], -1, (255, 0, 0), 2)
+    return single_hull + top_left_point
+
+    # result = cv2.drawContours(image_section, [single_hull], -1, (255, 0, 0), 2)
 
     # display_image_and_wait(result)
 
-    return result
+    # return result
 
 
 def main():
@@ -67,10 +69,15 @@ def main():
         image_ur = get_convex_hull(card_image, upper_right_rectangle)
         image_bl = get_convex_hull(card_image, bottom_left_rectangle)
         image_br = get_convex_hull(card_image, bottom_right_rectangle)
-        cv2.imshow('image_ul', image_ul)
-        cv2.imshow('image_ur', image_ur)
-        cv2.imshow('image_bl', image_bl)
-        cv2.imshow('image_br', image_br)
+
+        hulls = [image_ul, image_ur, image_bl, image_br]
+
+        result = cv2.drawContours(card_image, hulls, -1, (255, 0, 0), 1)
+        cv2.imshow('result', result)
+        # cv2.imshow('image_ul', image_ul)
+        # cv2.imshow('image_ur', image_ur)
+        # cv2.imshow('image_bl', image_bl)
+        # cv2.imshow('image_br', image_br)
         cv2.waitKey()
 
 
