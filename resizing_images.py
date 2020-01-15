@@ -3,7 +3,7 @@ import cv2
 import os
 from process_image import display_image_and_wait
 
-zoom = 5
+zoom = 4
 
 card_height = 88
 card_width = 58
@@ -40,14 +40,22 @@ def get_image_box(image):
 
 folder_name = "resized_images_with_alphachannel/"
 
-for filename in card_filenames:
-    image_path = os.path.join(pwd, cards_folder, filename)
-    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-    image_box = get_image_box(image)
-    transformation_matrix = cv2.getPerspectiveTransform(image_box, ref_card)
-    image_warp = cv2.warpPerspective(image, transformation_matrix,
-                                     (card_width, card_height))
 
-    path = os.path.join(folder_name, '{filename}'.format(filename=filename))
-    cv2.imwrite(path, image_warp)
-    print(filename)
+def main():
+    for filename in card_filenames:
+        image_path = os.path.join(pwd, cards_folder, filename)
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        image_box = get_image_box(image)
+        transformation_matrix = cv2.getPerspectiveTransform(
+            image_box, ref_card)
+        image_warp = cv2.warpPerspective(image, transformation_matrix,
+                                         (card_width, card_height))
+
+        path = os.path.join(folder_name,
+                            '{filename}'.format(filename=filename))
+        cv2.imwrite(path, image_warp)
+        print(filename)
+
+
+if __name__ == '__main__':
+    main()
