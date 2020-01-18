@@ -20,13 +20,9 @@ def solidity(contour):
 
 def get_convex_hull(card_image, point):
     top_left_point, bottom_right_point = point
-    print(top_left_point)
-    print(bottom_right_point)
 
     rectangle_width = bottom_right_point[0] - top_left_point[0]
     rectangle_height = bottom_right_point[1] - top_left_point[1]
-
-    print(rectangle_width, rectangle_height)
 
     section_x_start = top_left_point[0]
     section_x_end = section_x_start + rectangle_width
@@ -43,18 +39,11 @@ def get_convex_hull(card_image, point):
 
     solidities = map(solidity, contours)
     contours = filter(lambda c: solidity(c) > 0, contours)
-    print(list(solidities))
 
     single_contour = np.concatenate(list(contours))
     single_hull = cv2.convexHull(single_contour)
 
     return single_hull + top_left_point
-
-    # result = cv2.drawContours(image_section, [single_hull], -1, (255, 0, 0), 2)
-
-    # display_image_and_wait(result)
-
-    # return result
 
 
 def main():
@@ -74,10 +63,6 @@ def main():
 
         result = cv2.drawContours(card_image, hulls, -1, (255, 0, 0), 1)
         cv2.imshow('result', result)
-        # cv2.imshow('image_ul', image_ul)
-        # cv2.imshow('image_ur', image_ur)
-        # cv2.imshow('image_bl', image_bl)
-        # cv2.imshow('image_br', image_br)
         cv2.waitKey()
 
 
