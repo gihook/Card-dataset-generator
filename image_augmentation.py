@@ -122,8 +122,9 @@ def get_random_background():
     all_files = reduce(lambda c, a: c + a, all_files, [])
     all_files = list(all_files)
     length = len(all_files)
-    index = random.randint(0, length)
+    index = random.randint(0, length - 1)
     file_path = all_files[index]
+    print("bg: ", file_path)
     image = cv2.imread(file_path)
 
     return image
@@ -145,12 +146,12 @@ def random_string(stringLength=10):
 
 
 def get_formated_line(bbx):
-    text = "{class_number} {cx} {cy} {width}, {height}".format(
-        class_number=bbx.label,
-        cx=bbx.center_x,
-        cy=bbx.center_y,
-        width=bbx.width,
-        height=bbx.height)
+    cx = bbx.center_x / generated_image_width
+    cy = bbx.center_y / generated_image_height
+    width = bbx.width / generated_image_width
+    height = bbx.height / generated_image_height
+    text = "{class_number} {cx} {cy} {width} {height}".format(
+        class_number=bbx.label, cx=cx, cy=cy, width=width, height=height)
 
     return text
 
@@ -175,7 +176,7 @@ def write_image(file_name, image):
     return
 
 
-def main():
+def process():
     folder_path = "resized_images_with_alphachannel/"
     image_paths = get_paths_and_names(folder_path)
     classes = get_classes()
@@ -203,6 +204,7 @@ def main():
 
         random_file_name = random_string()
         write_to_txt_file(random_file_name, bbs_aug.bounding_boxes)
+        print(random_file_name, image_path)
 
         _, _, _, alphachannel = cv2.split(image_aug)
         alphachannel = 255 - alphachannel
@@ -215,6 +217,12 @@ def main():
 
         # image_to_display = bbs_aug.draw_on_image(result, size=1)
         # display_image_and_wait(image_to_display)
+
+
+def main():
+    for i in range(0, 200):
+        print("-------------------{i}-------------------".format(i=i))
+        process()
 
 
 if __name__ == '__main__':
