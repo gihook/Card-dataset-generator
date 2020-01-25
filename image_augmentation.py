@@ -14,8 +14,8 @@ from functools import reduce
 import random
 import string
 
-generated_image_height = 720
-generated_image_width = 720
+generated_image_height = 608
+generated_image_width = 608
 center_x = int((generated_image_width - card_width) / 2)
 center_y = int((generated_image_height - card_height) / 2)
 
@@ -32,11 +32,11 @@ def get_keypoints(convex_hull, center_x=center_x, center_y=center_y):
     return key_points
 
 
-def get_boundingbox(keypoints, padding=2, label=""):
-    kpsx = [kp.x for kp in keypoints.keypoints]
+def get_boundingbox(keypoints_on_image, padding=3, label=""):
+    kpsx = [kp.x for kp in keypoints_on_image.keypoints]
     minx = max(0, int(min(kpsx) - padding))
     maxx = min(generated_image_width, int(max(kpsx) + padding))
-    kpsy = [kp.y for kp in keypoints.keypoints]
+    kpsy = [kp.y for kp in keypoints_on_image.keypoints]
     miny = max(0, int(min(kpsy) - padding))
     maxy = min(generated_image_height, int(max(kpsy) + padding))
 
@@ -101,7 +101,8 @@ def get_paths_and_names(folder_path):
 
 def prepare_background(image):
     resized_image = cv2.resize(image,
-                               dsize=(720, 720),
+                               dsize=(generated_image_width,
+                                      generated_image_height),
                                interpolation=cv2.INTER_CUBIC)
 
     return resized_image
@@ -114,18 +115,23 @@ def all_files_from_folder(folder_path):
     return list(file_paths)
 
 
-def get_random_background():
-    dtd_folder = "dtd/images/"
-    subfolders = os.listdir(dtd_folder)
-    subfolders = map(lambda f: os.path.join(dtd_folder, f), subfolders)
-    all_files = map(all_files_from_folder, subfolders)
-    all_files = reduce(lambda c, a: c + a, all_files, [])
-    all_files = list(all_files)
+dtd_folder = "dtd/images/"
+subfolders = os.listdir(dtd_folder)
+subfolders = map(lambda f: os.path.join(dtd_folder, f), subfolders)
+all_files = map(all_files_from_folder, subfolders)
+all_files = reduce(lambda c, a: c + a, all_files, [])
+all_files = filter(lambda f: ".jpg" in f, all_files)
+all_files = list(all_files)
+
+image_cache = {}
+
+
+def get_random_background(all_files=all_files):
     length = len(all_files)
     index = random.randint(0, length - 1)
     file_path = all_files[index]
     print("bg: ", file_path)
-    image = cv2.imread(file_path)
+    image = read_image(file_path)
 
     return image
 
@@ -139,10 +145,20 @@ def get_classes():
         return dictionary
 
 
+classes = get_classes()
+
+
 def random_string(stringLength=10):
     letters = string.ascii_lowercase
 
     return ''.join(random.choice(letters) for i in range(stringLength))
+
+
+def float_to_string(num):
+    if num < 0 or num > 1:
+        raise ValueError('float_to_string: {num}', num=num)
+
+    return str(num)[:8]
 
 
 def get_formated_line(bbx):
@@ -151,7 +167,11 @@ def get_formated_line(bbx):
     width = bbx.width / generated_image_width
     height = bbx.height / generated_image_height
     text = "{class_number} {cx} {cy} {width} {height}".format(
-        class_number=bbx.label, cx=cx, cy=cy, width=width, height=height)
+        class_number=bbx.label,
+        cx=float_to_string(cx),
+        cy=float_to_string(cy),
+        width=float_to_string(width),
+        height=float_to_string(height))
 
     return text
 
@@ -176,16 +196,25 @@ def write_image(file_name, image):
     return
 
 
-def process():
+def read_image(image_path):
+    if (image_path in image_cache):
+        return image_cache[image_path]
+    card_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    image_cache[image_path] = card_image
+
+    return card_image
+
+
+def process(classes=classes):
     folder_path = "resized_images_with_alphachannel/"
     image_paths = get_paths_and_names(folder_path)
-    classes = get_classes()
+    # classes = get_classes()
 
     for (image_path, file_name) in image_paths:
         image = get_random_background()
         image = prepare_background(image)
 
-        card_image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        card_image = read_image(image_path)
         empty_image = centered_card(card_image)
         label = classes[file_name.replace('.png', '')]
         bounding_boxes_on_image = get_bounding_boxes_on_image(
@@ -197,7 +226,7 @@ def process():
                 "y": (-0.2, 0.2)
             },
                        rotate=(-180, 180),
-                       scale=(0.3, 1)),
+                       scale=(0.2, 0.6)),
         ])
         image_aug, bbs_aug = seq(image=empty_image,
                                  bounding_boxes=bounding_boxes_on_image)
@@ -220,7 +249,7 @@ def process():
 
 
 def main():
-    for i in range(0, 200):
+    for i in range(0, 1200):
         print("-------------------{i}-------------------".format(i=i))
         process()
 
