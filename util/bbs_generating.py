@@ -18,7 +18,7 @@ def get_keypoints(convex_hull, center_x, center_y):
     return key_points
 
 
-def get_boundingbox(keypoints_on_image, padding=3, label=""):
+def get_boundingbox(keypoints_on_image, padding=1, label=""):
     kpsx = [kp.x for kp in keypoints_on_image.keypoints]
     minx = max(0, int(min(kpsx) - padding))
     maxx = min(generated_image_width, int(max(kpsx) + padding))
