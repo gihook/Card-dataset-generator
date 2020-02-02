@@ -3,11 +3,9 @@ from models.scene import Scene
 from util.image_displaying import display_image_and_wait, display_scene
 from imgaug.augmentables.bbs import BoundingBoxesOnImage, BoundingBox
 from imgaug import augmenters as iaa
-
-first_path = "resized_images_with_alphachannel/9s.png"
-second_path = "resized_images_with_alphachannel/5d.png"
-first_card = Scene.from_path(first_path)
-second_card = Scene.from_path(second_path)
+from util.file_listing import card_filenames
+import random
+from util.image_generating import prepare_background
 
 
 def two_cards_scene(first: Scene, second: Scene):
@@ -60,8 +58,37 @@ def random_transformation(scene: Scene):
     return Scene.from_image(new_image, new_bbs)
 
 
+resized_cards_folder_name = "resized_images_with_alphachannel/"
+filenames = card_filenames(resized_cards_folder_name)
+cards = list(map(lambda f: Scene.from_path(f), filenames))
+
+
+def get_random_card():
+    index = random.randint(0, 51)
+
+    return cards[index]
+
+
+def read_background_scene(path):
+    image = cv2.imread(path)
+    image = prepare_background(image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+
+    print(image.shape)
+
+    return Scene.from_image(image, BoundingBoxesOnImage([], image.shape))
+
+
+background_path = "sarme.jpg"
+background = read_background_scene(background_path)
+
 for i in range(0, 50):
+    first_card = get_random_card()
+    second_card = get_random_card()
+    third_card = get_random_card()
     scene = two_cards_scene(first_card, second_card)
-    result = two_cards_scene(first_card, scene)
-    result = random_transformation(result)
-    display_scene(result)
+    result = two_cards_scene(third_card, scene)
+    # result = random_transformation(result)
+
+    final = merge(background, result)
+    display_scene(final)

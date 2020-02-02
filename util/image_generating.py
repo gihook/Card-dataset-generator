@@ -1,4 +1,6 @@
 import numpy as np
+import cv2
+from imgaug.augmentables.bbs import BoundingBoxesOnImage
 
 generated_image_height = 608
 generated_image_width = 608
@@ -25,3 +27,12 @@ def card_with_empty_backgroud(card_image):
                                                   card_center_x)] = card_image
 
     return empty_image
+
+
+def prepare_background(image):
+    resized_image = cv2.resize(image,
+                               dsize=(generated_image_width,
+                                      generated_image_height),
+                               interpolation=cv2.INTER_CUBIC)
+
+    return resized_image
