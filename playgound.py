@@ -6,6 +6,10 @@ from imgaug import augmenters as iaa
 from util.file_listing import card_filenames
 import random
 from util.image_generating import prepare_background
+from image_augmentation import write_image, write_to_txt_file, random_string
+from image_augmentation import get_paths_and_names, folder_path, classes, get_random_background
+
+image_paths = get_paths_and_names(folder_path)
 
 
 def two_cards_scene(first: Scene, second: Scene):
@@ -17,45 +21,7 @@ def two_cards_scene(first: Scene, second: Scene):
     new_image, new_bbs = seq(image=second.image, bounding_boxes=second.bbs)
     new_card = Scene.from_image(new_image, new_bbs)
 
-    return merge(first, new_card)
-
-
-def is_blocked(scene: Scene, bbx: BoundingBox):
-    x = bbx.center_x
-    y = bbx.center_y
-    pixel = scene.image[int(y)][int(x)]
-
-    return (len(list(filter(lambda x: x != 0, pixel))) > 0)
-
-
-def merge(background: Scene, overlay: Scene):
-    _, _, _, alphachannel = cv2.split(overlay.image)
-    alphachannel = 255 - alphachannel
-    result = cv2.bitwise_or(background.image.copy(),
-                            background.image.copy(),
-                            mask=alphachannel)
-    result = cv2.bitwise_or(result, overlay.image)
-    bbs = list(
-        filter(lambda bbx: not is_blocked(overlay, bbx),
-               background.bbs.bounding_boxes))
-    bbs = bbs + overlay.bbs.bounding_boxes
-    bbs = BoundingBoxesOnImage(bbs, background.image.shape)
-
-    return Scene.from_image(result, bbs)
-
-
-def random_transformation(scene: Scene):
-    seq = iaa.Sequential([
-        iaa.Affine(scale=(0.3, 0.8),
-                   translate_percent={
-                       "x": (-0.1, 0.1),
-                       "y": (-0.1, 0.1)
-                   },
-                   rotate=(-180, 180))
-    ])
-    new_image, new_bbs = seq(image=scene.image, bounding_boxes=scene.bbs)
-
-    return Scene.from_image(new_image, new_bbs)
+    return first.merge(new_card)
 
 
 resized_cards_folder_name = "resized_images_with_alphachannel/"
@@ -69,26 +35,36 @@ def get_random_card():
     return cards[index]
 
 
-def read_background_scene(path):
-    image = cv2.imread(path)
+def read_background_scene(image):
     image = prepare_background(image)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-
-    print(image.shape)
 
     return Scene.from_image(image, BoundingBoxesOnImage([], image.shape))
 
 
-background_path = "sarme.jpg"
-background = read_background_scene(background_path)
+def random_scene(num):
+    first = get_random_card()
+    second = get_random_card()
+    third = get_random_card()
+    scene = two_cards_scene(first, second)
+    scene = two_cards_scene(third, scene).random_transformation()
 
-for i in range(0, 50):
-    first_card = get_random_card()
-    second_card = get_random_card()
-    third_card = get_random_card()
-    scene = two_cards_scene(first_card, second_card)
-    result = two_cards_scene(third_card, scene)
-    # result = random_transformation(result)
+    for i in range(3, num):
+        random_card = get_random_card().random_transformation()
+        scene = scene.merge(random_card)
 
-    final = merge(background, result)
-    display_scene(final)
+    return scene
+
+
+for i in range(0, 55000):
+    print("iteration:", i)
+    result = random_scene(6)
+    background_image = get_random_background()
+
+    background = read_background_scene(background_image)
+    final = background.merge(result)
+
+    file_name = random_string()
+    write_to_txt_file(file_name, final.bbs.bounding_boxes)
+    write_image(file_name, final.image)
+    # display_scene(final)

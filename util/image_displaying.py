@@ -9,5 +9,5 @@ def display_image_and_wait(image, label='image'):
 
 def display_scene(scene: Scene):
     image = cv2.cvtColor(scene.image, cv2.COLOR_BGRA2BGR)
-    result = scene.bbs.draw_on_image(image, size=2)
+    result = scene.bbs.draw_on_image(image, size=1, color=(244, 11, 8))
     display_image_and_wait(result)

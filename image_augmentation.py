@@ -167,7 +167,7 @@ def get_formated_line(bbx):
     width = bbx.width / generated_image_width
     height = bbx.height / generated_image_height
     text = "{class_number} {cx} {cy} {width} {height}".format(
-        class_number=bbx.label,
+        class_number=classes[bbx.label],
         cx=float_to_string(cx),
         cy=float_to_string(cy),
         width=float_to_string(width),
@@ -205,9 +205,11 @@ def read_image(image_path):
     return card_image
 
 
+folder_path = "resized_images_with_alphachannel/"
+image_paths = get_paths_and_names(folder_path)
+
+
 def process(classes=classes):
-    folder_path = "resized_images_with_alphachannel/"
-    image_paths = get_paths_and_names(folder_path)
     # classes = get_classes()
 
     for (image_path, file_name) in image_paths:
