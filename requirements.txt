@@ -32,7 +32,7 @@ notebook==6.0.2
 numpy==1.17.4
 opencv-contrib-python==4.1.2.30
 opencv-python==4.1.2.30
-opencv-python-headless==4.1.2.30
+opencv-python-headless==4.2.0.32
 pandocfilters==1.4.2
 parso==0.5.1
 pexpect==4.7.0
