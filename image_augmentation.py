@@ -218,9 +218,11 @@ def process(classes=classes):
 
         card_image = read_image(image_path)
         empty_image = centered_card(card_image)
-        label = classes[file_name.replace('.png', '')]
+        parsed_filename = file_name.replace('.png', '')
+        print("parsed_filename: " + parsed_filename)
+        label = classes[parsed_filename]
         bounding_boxes_on_image = get_bounding_boxes_on_image(
-            card_image, image, label)
+            card_image, image, parsed_filename)
 
         seq = iaa.Sequential([
             iaa.Affine(translate_percent={
